@@ -2,7 +2,6 @@ import sys
 import random
 import math
 import matplotlib.pyplot as plt
-import numpy as np
 
 def main():
     
@@ -54,7 +53,7 @@ def main():
             # Creating one int form of flow id
             id_parts = str(flows[i][0]).split('.')
             flow_id_whole = int(id_parts[0] + id_parts[1] + id_parts[2] + id_parts[3])
-            virtual_to_physical_mapping.append(hash_function(flow_id_whole, 4, physical_bitmap_size))
+            virtual_to_physical_mapping.append(hash_function(flow_id_whole ^ hashes[virtual_bitmap_index], 4, physical_bitmap_size))
 
         # Adding virtual bitmap to total list
         virtual_bitmaps.append( (virtual_bitmap, virtual_to_physical_mapping) )
