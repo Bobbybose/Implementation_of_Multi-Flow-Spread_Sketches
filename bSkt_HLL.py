@@ -61,6 +61,18 @@ def main():
     for flow_index in range(len(flows)):
         print("Actual flow spread: " + str(flows[flow_index][1]) + "        Estimated spread: " + str(estimated_spreads[flow_index]))
 
+    # Refining flow information for output
+    flow_information = []
+    for index in range(num_flows):
+        flow_information.append((flows[index][0], flows[index][1], estimated_spreads[index]))
+
+    # Sorting by estimated size
+    flow_information.sort(reverse = True)
+
+    # Printing 25 largest estimated flow spreads:
+    for index in range(25):
+        print("Flow id: " + str(flow_information[index][0]) + "      Estimated Size: " + str(flow_information[index][2]) + "      Actual Size: " + str(flow_information[index][1]))
+
 
 
 # Inputs: List of all flows, physical bitmap, virtual bitmaps
@@ -94,13 +106,13 @@ def record_flows(flows, bSketch, hashes):
                 bSketch[estimator_hashed_to][register_hashed_to] = max(bSketch[estimator_hashed_to][register_hashed_to], geo_hash_value)
 
                 # Register to hash size in
-                register_to_hash_size = random.randrange(1000000000) % len(bSketch[0])
+                #register_to_hash_size = random.randrange(1000000000) % len(bSketch[0])
 
                 # Geometric hash of the register hashing size to
-                size_geo_hash_value = geometric_hash(register_to_hash_size)
+                #size_geo_hash_value = geometric_hash(register_to_hash_size)
 
                 # Recording packet size
-                bSketch[estimator_hashed_to][register_to_hash_size] = max(bSketch[estimator_hashed_to][register_to_hash_size], size_geo_hash_value)
+                #bSketch[estimator_hashed_to][register_to_hash_size] = max(bSketch[estimator_hashed_to][register_to_hash_size], size_geo_hash_value)
 # record_flows()
 
 
@@ -109,24 +121,30 @@ def query_flows(flows, bSketch, hashes):
     
     alpha = 0.7213/(1 + 1.079/num_registers)
 
+    # Estimated spreads of all flows
     estimated_spreads = []
 
+    # For each flow
     for flow_index in range(len(flows)):
-
+        # Estimates for this flow from each hashed to estimator
         flow_estimates = []
 
+        # Going hash by hash
         for hash in hashes:
             # Hash to an estimator using value: flow_id ^ current_hash
             estimator_hashed_to = hash_function(flows[flow_index][2] ^ hash, 4, len(bSketch))
 
-            # Estimation in the current hashed to estimator
+            # Harmonic mean of flow in estimator
             current_estimator_estimate = 0
             for register_num in range(num_registers):
                 current_estimator_estimate += 2**(-bSketch[estimator_hashed_to][register_num])
+            current_estimator_estimate = current_estimator_estimate ** -1
 
-            flow_estimate_for_estimator = alpha * num_registers * (current_estimator_estimate**-1)
+            # Estimating flow spread
+            flow_estimate_for_estimator = alpha * (num_registers**2) * current_estimator_estimate
             flow_estimates.append(flow_estimate_for_estimator)
 
+        # Using minimum estimated flow spread
         estimated_spread_for_flow = min(flow_estimates)
         estimated_spreads.append(estimated_spread_for_flow)
 
@@ -168,13 +186,13 @@ def hash_function(element_id, step_size, size):
 #              Maximum number of bits is 7 for l = 128
 def geometric_hash(element):
     # Performing uniform hash for element
-    hash_value = hash_function(element, 9, 4294967296)
+    hash_value = hash_function(element, 5, 2**8)
 
     # Obtaining binary form of hash value and removing prefix
     binary_form = bin(hash_value)[2:]
     
     # Calculating how many leading 0s are present
-    g = 32 - len(binary_form)
+    g = 8 - len(binary_form)
     
     #Returning geometric hash value
     return g
