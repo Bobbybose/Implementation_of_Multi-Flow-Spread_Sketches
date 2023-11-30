@@ -15,22 +15,22 @@
 ## Virtual Bitmap
 - To run, do 'python ./Virtual_Bitmap.py input_file'
 - **Architecture Operation:**
-    - Physical bitmap has 500,000 number of bits
-    - Each virtual bitmap has 500
+    - Physical bitmap has 500,000 bits
+    - Each virtual bitmap has 500 bits
         - Each flow is given a virtual bitmap
         - Each entry in the virtual bitmap hashes to an entry in the physical bitmap
-    - Elements are hashed to one entry in virtual and physical bitmap
+    - Elements are hashed to one entry in bitmap
     - When querying, estimate flow spread using formula n_f = l*ln(V_B) - l*ln(V_f)
         - l = number of bits in the virtual bitmap
         - V_B = percent of bits in physical bitmap set to 0
         - V_f = percent of bits in virtual bitmap set to 0
 - **Program Flow**
     - Read in flows and flow spreads from input file
-    - Create physical bitmap and a virtual bitmap per flow
-    - Use hashing to map indices from virtual bitmap to physical bitmap
-    - Record all flows into virtual and physical bitmaps
+    - Create physical bitmap and a virtual bitmap mapping per flow
+    - Record all flows into bitmap
         - Create elements (# elements = flow spread size)
-        - Record element in virtual and physical bitmap using hashing
+        - Find virtual bitmap bit that element hashes to
+        - Record element in physical bitmap bit that hashed virtual bitmap bit maps to
     - Query all flows to get estimated flow sizes
     - Plot actual vs estimated flow sizes
 - **Output:**
