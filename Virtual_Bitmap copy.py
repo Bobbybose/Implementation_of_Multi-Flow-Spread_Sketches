@@ -34,60 +34,48 @@ def main():
 
     # Creating physical and virtual bitmaps
     bitmap = [0] * physical_bitmap_size
-    #virtual_bitmaps = []
+    virtual_bitmaps = []
     
     # Creating hashes
     hashes = []
     for hash in range(virtual_bitmap_size):
         hashes.append(random.randrange(1000000000))
-
-    # Creating hash map for each virtual bitmap to map each virtual position to a place in the physical bitmap
-    virtual_bitmap_mappings = []
-    for flow_index in range(num_flows):
-        # Mapping for the flow
-        mapping_for_flow = []
-        for virtual_bitmap_index in range(virtual_bitmap_size):
-            # Creating one int form of flow id
-            id_parts = str(flows[flow_index][0]).split('.')
-            flow_id_whole = int(id_parts[0] + id_parts[1] + id_parts[2] + id_parts[3])
-            mapping_for_flow.append(hash_function(flow_id_whole ^ hashes[virtual_bitmap_index], 4, physical_bitmap_size))
-        virtual_bitmap_mappings.append(mapping_for_flow)
-
+        
     # Creating a virtual bitmap for each flow
     #   Each virtual bitmap is a tuple with first bitmap, and second virtual to physical bitmap mapping
-    #for i in range(num_flows):
-    #    # Creating virtual bitmap
-    #    virtual_bitmap = [0] * virtual_bitmap_size
-    #    
-    #    # Creating unique mapping from virtual bitmap to physical bitmap
-    #    virtual_to_physical_mapping = []
-    #    for virtual_bitmap_index in range(virtual_bitmap_size):
-    #        # Creating one int form of flow id
-    #        id_parts = str(flows[i][0]).split('.')
-    #        flow_id_whole = int(id_parts[0] + id_parts[1] + id_parts[2] + id_parts[3])
-    #        virtual_to_physical_mapping.append(hash_function(flow_id_whole ^ hashes[virtual_bitmap_index], 4, physical_bitmap_size))
+    for i in range(num_flows):
+        # Creating virtual bitmap
+        virtual_bitmap = [0] * virtual_bitmap_size
+        
+        # Creating unique mapping from virtual bitmap to physical bitmap
+        virtual_to_physical_mapping = []
+        for virtual_bitmap_index in range(virtual_bitmap_size):
+            # Creating one int form of flow id
+            id_parts = str(flows[i][0]).split('.')
+            flow_id_whole = int(id_parts[0] + id_parts[1] + id_parts[2] + id_parts[3])
+            virtual_to_physical_mapping.append(hash_function(flow_id_whole ^ hashes[virtual_bitmap_index], 4, physical_bitmap_size))
 
         # Adding virtual bitmap to total list
-    #    virtual_bitmaps.append( (virtual_bitmap, virtual_to_physical_mapping) )
+        virtual_bitmaps.append( (virtual_bitmap, virtual_to_physical_mapping) )
 
     # Recording all flows
-    record_flows(flows, bitmap, virtual_bitmap_mappings)
+    record_flows(flows, bitmap, virtual_bitmaps)
 
     # Estimated the spread of all flows
-    estimated_flow_spreads = query_flows(flows, bitmap, virtual_bitmap_mappings)
+    estimated_flow_spreads = query_flows(flows, bitmap, virtual_bitmaps)
 
     # Printing flow spreads
-    for flow_index in range(len(flows)):
-        print("Flow id: " + str(flows[flow_index][0]) + "        True spread: " + str(flows[flow_index][1]) + "        Estimated Spread: " + str(estimated_flow_spreads[flow_index]))
+    #for flow_index in range(len(flows)):
+    #    print("Flow id: " + str(flows[flow_index][0]) + "        True spread: " + str(flows[flow_index][1]) + "        Estimated Spread: " + str(estimated_flow_spreads[flow_index]))
 
     # Plot the actual flow spread vs the estimated flow spread
-    #plot_flow_spreads(flows, estimated_flow_spreads)
+    plot_flow_spreads(flows, estimated_flow_spreads)
 
 
 # Inputs: List of all flows, physical bitmap, virtual bitmaps
 # Returns: None
 # Description: Generates elements for each flow based on given spread, and inserts them into the flow's virtual bitmap and overall physical bitmap
-def record_flows(flows, bitmap, virtual_bitmap_mappings):
+def record_flows(flows, bitmap, virtual_bitmaps):
     # Recording each flow
     for flow_index in range(len(flows)):
         # Creating element ids for the flow
@@ -100,15 +88,11 @@ def record_flows(flows, bitmap, virtual_bitmap_mappings):
         # Inserting each element into the bitmaps
         for element in elements:
             # Inserting into virtual bitmap
-            #virtual_bitmap_hash_index = hash_function(element, 4, len(virtual_bitmaps[0][0]))
-            #virtual_bitmaps[flow_index][0][virtual_bitmap_hash_index] = 1
-
-            # Index in virtual bitmap for flow that element hashes to
-            virtual_bitmap_hash_index = hash_function(element, 5, len(virtual_bitmap_mappings[0]))
+            virtual_bitmap_hash_index = hash_function(element, 4, len(virtual_bitmaps[0][0]))
+            virtual_bitmaps[flow_index][0][virtual_bitmap_hash_index] = 1
 
             # Inserting into physical bitmap
-            #physical_bitmap_index = virtual_bitmaps[flow_index][1][virtual_bitmap_hash_index]
-            physical_bitmap_index = virtual_bitmap_mappings[flow_index][virtual_bitmap_hash_index]
+            physical_bitmap_index = virtual_bitmaps[flow_index][1][virtual_bitmap_hash_index]
             bitmap[physical_bitmap_index] = 1
 # record_flows()
 
@@ -119,9 +103,9 @@ def record_flows(flows, bitmap, virtual_bitmap_mappings):
 #   n_f = l*ln(V_b) - l*ln(V_f)
 #       l = Virtual bitmap length
 #       V_b and V_f = percent of zeros in physical and virtual bitmap respectively
-def query_flows(flows, bitmap, virtual_bitmap_mappings):
+def query_flows(flows, bitmap, virtual_bitmaps):
     # Calculating percent of zeros in physical bitmap
-    virtual_bitmap_length = len(virtual_bitmap_mappings[0])
+    virtual_bitmap_length = len(virtual_bitmaps[0][0])
     physical_bitmap_percent_zeroes = bitmap.count(0) / len(bitmap)
     
     # Estimated spread of all flows
@@ -130,26 +114,13 @@ def query_flows(flows, bitmap, virtual_bitmap_mappings):
     # Estimating spread of each flow
     for flow_index in range(len(flows)):
         # Calculating percent of zeros in virtual bitmap
-        #if virtual_bitmaps[flow_index][0].count(0) != 0:
-        #    virtual_bitmap_percent_zeroes = virtual_bitmaps[flow_index][0].count(0) / len(virtual_bitmaps[flow_index][0])
+        if virtual_bitmaps[flow_index][0].count(0) != 0:
+            virtual_bitmap_percent_zeroes = virtual_bitmaps[flow_index][0].count(0) / len(virtual_bitmaps[flow_index][0])
         # If there are no zeroes, setting to 1, so that ln function doesn't break
-        #else:
-        #    virtual_bitmap_percent_zeroes = 1 / len(virtual_bitmaps[flow_index][0])
-
-        # Construct virtual bitmap
-        virtual_bitmap = []
-        for map_index in virtual_bitmap_mappings[flow_index]:
-            virtual_bitmap.append(bitmap[map_index])
-
-        if virtual_bitmap.count(0) != 0:
-            virtual_bitmap_percent_zeroes = virtual_bitmap.count(0) / virtual_bitmap_length
-            print("Here1   " + str(virtual_bitmap.count(0)))
         else:
-            virtual_bitmap_percent_zeroes = 1 / virtual_bitmap_length
-            print("Here2   " + str(virtual_bitmap.count(0)))
-
+            virtual_bitmap_percent_zeroes = 1 / len(virtual_bitmaps[flow_index][0])
+        
         # Calculating the estimated flow spread using formula
-        #print("VB " + str(flow_index) + "     " + str(virtual_bitmap_percent_zeroes))
         estimated_spread = virtual_bitmap_length * math.log(physical_bitmap_percent_zeroes) - virtual_bitmap_length * math.log(virtual_bitmap_percent_zeroes)
         estimated_flow_spreads.append(estimated_spread)
 
