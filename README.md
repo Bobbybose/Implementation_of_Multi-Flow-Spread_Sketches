@@ -37,23 +37,6 @@
     - Plot of actual vs estimated bit sizes
         - x axis limit set to flow size = 500
 
-## Probabilistic Bitmap
-- To run, do 'python ./probabilistic_bitmap.py number_bits_in_bitmap sampling_probability'
-- **Architecture Operation:**
-    - Bitmap has a given number of bits
-    - Each element is hashed to one bit in the bitmap based on a given sampling probability
-        - If hashed value < maximum hash value * sampling probability, then hash to an entry using another hash
-    - When querying, estimate flow spread using formula: n_f = -(m/p)ln(v)
-        - m = # bits in bitmap
-        - v = fraction of bits in bitmap that are zeros
-        - p = sampling probability
-- **Program Flow**
-    - Generate 5 flows with spreads 100, 1000, 10000, 100000, 1000000
-    - Records each flow in bitmap and then queries for estimated flow spread
-    - Bitmap resets after each record and query
-- **Output:**
-    - Line for each flow with true flow spread and estimated flow spread
-
 ## bSkt (HLL)
 - To run, do 'python ./bSkt_HLL.py input_file'
 - **Architecture Operation:**
